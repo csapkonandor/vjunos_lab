@@ -10,7 +10,7 @@ echo "--------------------------------------------------"
 # 1. Check if container exists
 if ! docker ps -a --format '{{.Names}}' | grep -q "^${CID}$"; then
     echo "Container $CID does not exist. Nothing to tear down."
-    exit 0
+    #exit 0
 fi
 
 # 2. Trigger ACPI shutdown via QEMU monitor
@@ -33,6 +33,9 @@ echo "[4/4] Cleaning up veth interfaces and bridges..."
 for t in mgmt mgmt-c ge0 ge0-c ge1 ge1-c hA1 hA1-c hA2 hA2-c hB1 hB1-c hB2 hB2-c; do
     sudo ip link del "$t" >/dev/null 2>&1 || true
 done
+
+docker network rm ge-000-docker
+docker network rm ge-001-docker
 
 for br in mgmt-br ge-000 ge-001; do
     sudo ip link del "$br" >/dev/null 2>&1 || true

@@ -175,6 +175,14 @@ for H in hostA1 hostA2; do
     sudo nsenter --net="$NS" ip route add default via 10.0.0.1
 done
 
+docker network create \
+  --driver=bridge \
+  --subnet=10.0.0.0/24 \
+  --gateway=10.0.0.1 \
+  --opt com.docker.network.bridge.name=ge-000 \
+  ge-000-docker
+
+
 # LAN B hosts
 for H in hostB1 hostB2; do
     NS=$(get_ns "$H")
@@ -187,6 +195,16 @@ for H in hostB1 hostB2; do
     sudo nsenter --net="$NS" ip addr add 10.0.1.$IP/24 dev eth0
     sudo nsenter --net="$NS" ip route add default via 10.0.1.1
 done
+
+docker network create \
+  --driver=bridge \
+  --subnet=10.0.1.0/24 \
+  --gateway=10.0.1.1 \
+  --opt com.docker.network.bridge.name=ge-001 \
+  ge-001-docker
+
+echo "Docker bridge networks created:" 
+docker network ls
 
 echo "[14/14] Setup complete!"
 echo "--------------------------------------------------"

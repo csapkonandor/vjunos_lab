@@ -36,7 +36,7 @@ docker build -t vjunos-qemu "$WORKDIR"
 # 5. Create host bridges
 echo "[5/14] Creating host bridges..."
 for br in ge-000 ge-001 mgmt-br; do
-    sudo ip link del "$br" >/dev/null 2>&1 || true
+    #sudo ip link del "$br" >/dev/null 2>&1 || true
     sudo ip link add "$br" type bridge
     sudo ip link set "$br" up
 done
@@ -68,11 +68,6 @@ echo "Container PID = $PID"
 
 # 7. Create veth interfaces and move them into container
 echo "[7/14] Wiring veth interfaces..."
-
-# Clean leftovers
-for t in tap-mgmt tap-ge0 tap-ge1; do
-    sudo ip link del "$t" >/dev/null 2>&1 || true
-done
 
 # mgmt
 sudo ip link add mgmt type veth peer name mgmt-c

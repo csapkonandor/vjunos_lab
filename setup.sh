@@ -12,29 +12,29 @@ echo " vJunos Router Setup (TAP-based wiring)"
 echo "--------------------------------------------------"
 
 # 1. Validate config file
-echo "[1/14] Checking juniper.conf..."
+echo "[1/11] Checking juniper.conf..."
 if [[ ! -f "$CONF" ]]; then
     echo "ERROR: juniper.conf not found in $WORKDIR"
     exit 1
 fi
 
 # 2. Create config.img
-echo "[2/14] Creating config.img..."
+echo "[2/11] Creating config.img..."
 chmod +x "$MAKE_CONFIG"
 cd "$WORKDIR"
 sudo ./make-config-25.4R1.12.sh juniper.conf config.img
 echo "config.img created."
 
 # 3. Remove old container if exists
-echo "[3/14] Removing old container if present..."
+echo "[3/11] Removing old container if present..."
 docker rm -f "$CID" >/dev/null 2>&1 || true
 
 # 4. Build Docker image
-echo "[4/14] Building Docker image..."
+echo "[4/11] Building Docker image..."
 docker build -t vjunos-qemu "$WORKDIR"
 
 # 5. Create host bridges
-echo "[5/14] Creating host bridges..."
+echo "[5/11] Creating host bridges..."
 for br in ge-000 ge-001 mgmt-br; do
     #sudo ip link del "$br" >/dev/null 2>&1 || true
     sudo ip link add "$br" type bridge
@@ -42,7 +42,7 @@ for br in ge-000 ge-001 mgmt-br; do
 done
 
 # 6. Start container
-echo "[6/14] Starting vJunos container..."
+echo "[6/11] Starting vJunos container..."
 docker run -d --name "$CID" \
   --privileged \
   --device /dev/kvm \
@@ -67,7 +67,7 @@ PID=$(docker inspect -f '{{.State.Pid}}' "$CID")
 echo "Container PID = $PID"
 
 # 7. Create veth interfaces and move them into container
-echo "[7/14] Wiring veth interfaces..."
+echo "[7/11] Wiring veth interfaces..."
 
 # mgmt
 sudo ip link add mgmt type veth peer name mgmt-c
@@ -90,7 +90,7 @@ sudo ip link set ge1-c netns "$PID"
 
 
 # 8. Bring interfaces up inside container
-echo "[8/14] Bringing interfaces up inside container..."
+echo "[8/11] Bringing interfaces up inside container..."
 sudo nsenter -t "$PID" -n bash <<EOF
 ip link set lo up
 ip link set mgmt-c up
@@ -109,71 +109,7 @@ echo "--------------------------------------------------"
 # Hosts                                         #
 #################################################
 
-echo "[9/14] Starting docker compose for hosts..."
-docker compose up -d
-
-echo "[10/14] Waiting for containers to settle..."
-sleep 2
-
-# Helper: get stable Docker network namespace path
-get_ns() {
-    docker inspect -f '{{.NetworkSettings.SandboxKey}}' "$1"
-}
-
-# Helper: move container-side veth into container namespace
-move_veth() {
-    HOST_IF=$1
-    CONT_IF=$2
-    CONT=$3
-    NS=$(get_ns "$CONT")
-
-    echo "  - Moving $CONT_IF into $CONT (ns: $NS)"
-    sudo ip link set "$CONT_IF" netns "$NS"
-}
-
-
-echo "[11/14] Creating veth pairs..."
-
-# Host interfaces
-sudo ip link add hA1 type veth peer name hA1-c
-sudo ip link add hA2 type veth peer name hA2-c
-sudo ip link add hB1 type veth peer name hB1-c
-sudo ip link add hB2 type veth peer name hB2-c
-
-echo "[12/14] Attaching host ends to bridges..."
-
-sudo ip link set hA1 master ge-000
-sudo ip link set hA2 master ge-000
-
-sudo ip link set hB1 master ge-001
-sudo ip link set hB2 master ge-001
-
-sudo ip link set hA1 up
-sudo ip link set hA2 up
-sudo ip link set hB1 up
-sudo ip link set hB2 up
-
-echo "[13/14] Moving container ends into namespaces..."
-
-move_veth hA1 hA1-c hostA1
-move_veth hA2 hA2-c hostA2
-move_veth hB1 hB1-c hostB1
-move_veth hB2 hB2-c hostB2
-
-echo "[14/14] Configuring hosts..."
-
-# LAN A hosts
-for H in hostA1 hostA2; do
-    NS=$(get_ns "$H")
-    IF=$(echo "$H" | sed 's/hostA/hA/')
-    IP_SUFFIX=$(echo "$H" | sed 's/hostA//')
-    IP=$((10 + IP_SUFFIX))
-
-    sudo nsenter --net="$NS" ip link set ${IF}-c name eth0
-    sudo nsenter --net="$NS" ip link set eth0 up
-    sudo nsenter --net="$NS" ip addr add 10.0.0.$IP/24 dev eth0
-    sudo nsenter --net="$NS" ip route add default via 10.0.0.1
-done
+echo "[9/11] Creating docker bridge netwroks from kernel bridges..."
 
 docker network create \
   --driver=bridge \
@@ -182,20 +118,6 @@ docker network create \
   --opt com.docker.network.bridge.name=ge-000 \
   ge-000-docker
 
-
-# LAN B hosts
-for H in hostB1 hostB2; do
-    NS=$(get_ns "$H")
-    IF=$(echo "$H" | sed 's/hostB/hB/')
-    IP_SUFFIX=$(echo "$H" | sed 's/hostB//')
-    IP=$((20 + IP_SUFFIX))
-
-    sudo nsenter --net="$NS" ip link set ${IF}-c name eth0
-    sudo nsenter --net="$NS" ip link set eth0 up
-    sudo nsenter --net="$NS" ip addr add 10.0.1.$IP/24 dev eth0
-    sudo nsenter --net="$NS" ip route add default via 10.0.1.1
-done
-
 docker network create \
   --driver=bridge \
   --subnet=10.0.1.0/24 \
@@ -203,10 +125,20 @@ docker network create \
   --opt com.docker.network.bridge.name=ge-001 \
   ge-001-docker
 
+#sudo ip route add 10.0.1.0/24 via 10.0.0.1 dev ge-000
+#sudo ip route add 10.0.0.0/24 via 10.0.1.1 dev ge-001
+#sudo sysctl -w net.ipv4.ip_forward=1
+
 echo "Docker bridge networks created:" 
 docker network ls
 
-echo "[14/14] Setup complete!"
+echo "[10/11] Starting docker compose for hosts..."
+
+docker compose up -d
+
+echo "[11/11] Waiting for containers to settle..."
+sleep 2
+
 echo "--------------------------------------------------"
 echo " Host are running! "
 echo " Wait for the vjunos router and test Connectivity:" 

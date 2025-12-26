@@ -3,27 +3,37 @@ services:
   hostA1:
     image: alpine:latest
     container_name: hostA1
-    privileged: true
-    network_mode: none
+    networks:
+      ge-000-docker:
+        ipv4_address: 10.0.0.2
     command: sh -c "sleep infinity"
 
   hostA2:
     image: alpine:latest
     container_name: hostA2
-    privileged: true
-    network_mode: none
+    networks:
+      ge-000-docker:
+        ipv4_address: 10.0.0.3
     command: sh -c "sleep infinity"
 
   hostB1:
     image: alpine:latest
     container_name: hostB1
-    privileged: true
-    network_mode: none
+    networks:
+      ge-001-docker:
+        ipv4_address: 10.0.1.2
     command: sh -c "sleep infinity"
 
   hostB2:
     image: alpine:latest
     container_name: hostB2
-    privileged: true
-    network_mode: none
+    networks:
+      ge-001-docker:
+        ipv4_address: 10.0.1.3
     command: sh -c "sleep infinity"
+
+networks:
+  ge-000-docker:
+    external: true
+  ge-001-docker:
+    external: true

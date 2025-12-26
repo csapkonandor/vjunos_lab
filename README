@@ -1,0 +1,92 @@
+#######################################
+Deploy and Manage vJunos-router on KVM:
+=======================================
+https://www.juniper.net/documentation/us/en/software/vjunos-router/vjunos-router-kvm/topics/deploy-and-manage-vjunos-router-
+
+download the files
+=====================
+make-config-25.4R1.12.sh
+vJunos-router-25.4R1.12.qcow2
+vjunos-router-25.4R1.12.xml
+
+copy the original image to a live image
+=========================================
+cp vJunos-router-25.4R1.12.qcow2 vjunos-rtr1-live.qcow2
+
+
+##########################
+password hash generation:
+==========================
+openssl passwd -6
+
+update the password hash in the juniper.conf
+you can login by telnet with root with this password
+
+########################
+turn off mixing up logs
+========================
+cli
+configure
+set system syslog console any none
+commit
+
+###########################
+turn off paging
+===========================
+
+set cli screen-length 0
+
+################################
+understading how NICS connected
+================================
+
+QEMU argument ORDER determines the connection pairs
+
+
+Final mapping table (your exact setup)
+Order	Host TAP	QEMU NIC	Junos interface
+1	tap‑mgmt	virtio‑net0	fxp0
+2	tap‑ge0	        virtio‑net1	ge‑0/0/0
+3	tap‑ge1	        virtio‑net2	ge‑0/0/1
+
+This is deterministic and always follows the order of the -device virtio-net-pci lines.
+
+1. QEMU presents virtual NICs to the VM
+
+In the order you defined:
+-device virtio-net-pci,netdev=mgmt
+-device virtio-net-pci,netdev=ge0
+-device virtio-net-pci,netdev=ge1
+
+This becomes:
+
+    NIC #0 → tap‑mgmt
+
+    NIC #1 → tap‑ge0
+
+    NIC #2 → tap‑ge1
+
+2. Junos probes the hardware
+
+Before reading any config, Junos discovers:
+
+    NIC #0 = management NIC → fxp0
+
+    NIC #1 = first data NIC → ge‑0/0/0
+
+    NIC #2 = second data NIC → ge‑0/0/1
+
+3. Only after hardware discovery does Junos load your config
+
+Your config file is applied onto the interfaces that already exist.
+
+If your config says:
+
+interfaces {
+    ge-0/0/0 { ... }
+    ge-0/0/1 { ... }
+    fxp0 { ... }
+}
+
+Junos simply configures those interfaces.
+It does not use the config to decide which NIC is which.

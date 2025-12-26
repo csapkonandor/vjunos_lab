@@ -66,8 +66,8 @@ fi
 PID=$(docker inspect -f '{{.State.Pid}}' "$CID")
 echo "Container PID = $PID"
 
-# 7. Create TAP interfaces and move them into container
-echo "[7/14] Wiring TAP interfaces..."
+# 7. Create veth interfaces and move them into container
+echo "[7/14] Wiring veth interfaces..."
 
 # Clean leftovers
 for t in tap-mgmt tap-ge0 tap-ge1; do

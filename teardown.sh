@@ -27,8 +27,8 @@ echo "[3/4] Removing containers..."
 docker rm "$CID" >/dev/null 2>&1 || true
 docker compose down
 
-# 5. Clean up TAP interfaces and bridges
-echo "[4/4] Cleaning up TAP interfaces and bridges..."
+# 5. Clean up veth interfaces and bridges
+echo "[4/4] Cleaning up veth interfaces and bridges..."
 
 for t in mgmt mgmt-c ge0 ge0-c ge1 ge1-c hA1 hA1-c hA2 hA2-c hB1 hB1-c hB2 hB2-c; do
     sudo ip link del "$t" >/dev/null 2>&1 || true

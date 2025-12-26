@@ -7,15 +7,13 @@ CONFIG_DISK=/vjunos/config.img
 MEM_MB=5120
 CPUS=4
 
-echo "run-vjunos.sh: waiting for TAP interfaces..."
+echo "run-vjunos.sh: waiting for veth interfaces..."
 
 # Wait for veth-TAP interfaces created by setup.sh
 while ! ip link show mgmt-c >/dev/null 2>&1; do sleep 0.2; done
 while ! ip link show ge0-c  >/dev/null 2>&1; do sleep 0.2; done
 while ! ip link show ge1-c  >/dev/null 2>&1; do sleep 0.2; done
 
-# 5. Create host bridges
-echo "[5/14] Creating host bridges..."
 for br in ge-000-dckr ge-001-dckr mgmt-br-dckr; do
     ip link del "$br" >/dev/null 2>&1 || true
     ip link add "$br" type bridge
@@ -28,7 +26,6 @@ ip link set tap-mgmt up
 ip link set tap-mgmt master mgmt-br-dckr
 ip link set mgmt-c up
 ip link set mgmt-c master mgmt-br-dckr
-
 
 # ge0
 ip tuntap add dev tap-ge0 mode tap
@@ -44,7 +41,7 @@ ip link set tap-ge1 master ge-001-dckr
 ip link set ge1-c up
 ip link set ge1-c master ge-001-dckr
 
-echo "run-vjunos.sh: TAP interfaces detected, starting QEMU..."
+echo "run-vjunos.sh: veth interfaces detected, brideges and TAP interfaces created, starting QEMU..."
 
 exec qemu-system-x86_64 \
   -nographic \

@@ -1,0 +1,29 @@
+services:
+
+  hostA1:
+    image: alpine:latest
+    container_name: hostA1
+    privileged: true
+    network_mode: none
+    command: sh -c "sleep infinity"
+
+  hostA2:
+    image: alpine:latest
+    container_name: hostA2
+    privileged: true
+    network_mode: none
+    command: sh -c "sleep infinity"
+
+  hostB1:
+    image: alpine:latest
+    container_name: hostB1
+    privileged: true
+    network_mode: none
+    command: sh -c "sleep infinity"
+
+  hostB2:
+    image: alpine:latest
+    container_name: hostB2
+    privileged: true
+    network_mode: none
+    command: sh -c "sleep infinity"

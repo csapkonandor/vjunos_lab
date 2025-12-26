@@ -9,10 +9,40 @@ CPUS=4
 
 echo "run-vjunos.sh: waiting for TAP interfaces..."
 
-# Wait for TAP interfaces created by setup.sh
-while ! ip link show tap-mgmt >/dev/null 2>&1; do sleep 0.2; done
-while ! ip link show tap-ge0  >/dev/null 2>&1; do sleep 0.2; done
-while ! ip link show tap-ge1  >/dev/null 2>&1; do sleep 0.2; done
+# Wait for veth-TAP interfaces created by setup.sh
+while ! ip link show mgmt-c >/dev/null 2>&1; do sleep 0.2; done
+while ! ip link show ge0-c  >/dev/null 2>&1; do sleep 0.2; done
+while ! ip link show ge1-c  >/dev/null 2>&1; do sleep 0.2; done
+
+# 5. Create host bridges
+echo "[5/14] Creating host bridges..."
+for br in ge-000-dckr ge-001-dckr mgmt-br-dckr; do
+    ip link del "$br" >/dev/null 2>&1 || true
+    ip link add "$br" type bridge
+    ip link set "$br" up
+done
+
+# mgmt
+ip tuntap add dev tap-mgmt mode tap
+ip link set tap-mgmt up
+ip link set tap-mgmt master mgmt-br-dckr
+ip link set mgmt-c up
+ip link set mgmt-c master mgmt-br-dckr
+
+
+# ge0
+ip tuntap add dev tap-ge0 mode tap
+ip link set tap-ge0 up
+ip link set tap-ge0 master ge-000-dckr
+ip link set ge0-c up
+ip link set ge0-c master ge-000-dckr
+
+# ge1
+ip tuntap add dev tap-ge1 mode tap
+ip link set tap-ge1 up
+ip link set tap-ge1 master ge-001-dckr
+ip link set ge1-c up
+ip link set ge1-c master ge-001-dckr
 
 echo "run-vjunos.sh: TAP interfaces detected, starting QEMU..."
 

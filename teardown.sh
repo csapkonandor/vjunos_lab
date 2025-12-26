@@ -22,14 +22,15 @@ docker exec "$CID" sh -c 'echo "system_powerdown" | nc -U /tmp/qmp-sock >/dev/nu
 echo "[2/4] Waiting for Junos to shut down..."
 docker wait "$CID" >/dev/null 2>&1 || true
 
-# 4. Remove container normally
-echo "[3/4] Removing container..."
+# 4. Remove containers normally
+echo "[3/4] Removing containers..."
 docker rm "$CID" >/dev/null 2>&1 || true
+docker compose down
 
 # 5. Clean up TAP interfaces and bridges
 echo "[4/4] Cleaning up TAP interfaces and bridges..."
 
-for t in tap-mgmt tap-ge0 tap-ge1; do
+for t in mgmt mgmt-c ge0 ge0-c ge1 ge1-c hA1 hA1-c hA2 hA2-c hB1 hB1-c hB2 hB2-c; do
     sudo ip link del "$t" >/dev/null 2>&1 || true
 done
 

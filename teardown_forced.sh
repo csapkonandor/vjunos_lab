@@ -10,7 +10,6 @@ echo "--------------------------------------------------"
 # 1. Check if container exists
 if ! docker ps -a --format '{{.Names}}' | grep -q "^${CID}$"; then
     echo "Container $CID does not exist. Nothing to tear down."
-    exit 0
 fi
 
 # 2. Gracefully shut down QEMU (PID 1 inside container)
@@ -24,11 +23,12 @@ docker wait "$CID" >/dev/null 2>&1 || true
 # 4. Remove container normally (no -f!)
 echo "[3/4] Removing container..."
 docker rm "$CID" >/dev/null 2>&1 || true
+docker compose down
 
 # 5. Clean up TAP interfaces and bridges
 echo "[4/4] Cleaning up TAP interfaces and bridges..."
 
-for t in tap-mgmt tap-ge0 tap-ge1; do
+for t in tap-mgmt tap-ge0 tap-ge1 hA1 hA1-c hA2 hA2-c hB1 hB1-c hB2 hB2-c; do
     sudo ip link del "$t" >/dev/null 2>&1 || true
 done
 

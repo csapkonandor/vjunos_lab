@@ -47,15 +47,17 @@ echo "run-vjunos.sh: veth interfaces detected, brideges and TAP interfaces creat
 exec qemu-system-x86_64 \
   -nographic \
   -enable-kvm \
-  -machine accel=kvm,type=pc \
-  -cpu IvyBridge,+vmx \
-  -smp ${CPUS} \
+  -machine q35,accel=kvm \
+  -cpu host,+vmx \
+  -smp 2,threads=1,sockets=2 \
   -m ${MEM_MB}M \
   \
-  -drive file=${DISK_IMAGE},if=virtio,cache=writeback,format=qcow2 \
-  -drive file=${CONFIG_DISK},if=none,format=raw,id=cfgdisk \
-  -device usb-ehci,id=ehci \
-  -device usb-storage,drive=cfgdisk,removable=on \
+  -rtc base=utc,clock=host,driftfix=slew \
+  -no-hpet \
+  -global kvm-pit.lost_tick_policy=discard \
+  \
+  -drive file=${DISK_IMAGE},if=virtio,cache=none,format=qcow2,aio=threads \
+  -drive file=${CONFIG_DISK},if=virtio,format=raw \
   \
   -serial tcp:0.0.0.0:8610,server,nowait \
   \

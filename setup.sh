@@ -39,6 +39,7 @@ for br in ge-000 ge-001 mgmt-br; do
     #sudo ip link del "$br" >/dev/null 2>&1 || true
     sudo ip link add "$br" type bridge
     sudo ip link set "$br" up
+    sudo ip link set "$br" promisc on
 done
 
 # 6. Start container
@@ -111,18 +112,30 @@ echo "--------------------------------------------------"
 
 echo "[9/11] Creating docker bridge netwroks from kernel bridges..."
 
-docker network create \
-  --driver=bridge \
+#docker network create \
+#  --driver=bridge \
+#  --subnet=10.0.0.0/24 \
+#  --gateway=10.0.0.1 \
+#  --opt com.docker.network.bridge.name=ge-000 \
+#  ge-000-docker
+
+#docker network create \
+#  --driver=bridge \
+#  --subnet=10.0.1.0/24 \
+#  --gateway=10.0.1.1 \
+#  --opt com.docker.network.bridge.name=ge-001 \
+#  ge-001-docker
+
+docker network create -d macvlan \
   --subnet=10.0.0.0/24 \
   --gateway=10.0.0.1 \
-  --opt com.docker.network.bridge.name=ge-000 \
+  -o parent=ge-000 \
   ge-000-docker
 
-docker network create \
-  --driver=bridge \
+docker network create -d macvlan \
   --subnet=10.0.1.0/24 \
   --gateway=10.0.1.1 \
-  --opt com.docker.network.bridge.name=ge-001 \
+  -o parent=ge-001 \
   ge-001-docker
 
 #sudo ip route add 10.0.1.0/24 via 10.0.0.1 dev ge-000

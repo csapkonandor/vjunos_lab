@@ -25,7 +25,7 @@ docker wait "$CID" >/dev/null 2>&1 || true
 # 4. Remove containers normally
 echo "[3/4] Removing containers..."
 docker rm "$CID" >/dev/null 2>&1 || true
-docker compose down
+docker compose down || true
 
 # 5. Clean up veth interfaces and bridges
 echo "[4/4] Cleaning up veth interfaces and bridges..."
@@ -34,8 +34,8 @@ for t in mgmt mgmt-c ge0 ge0-c ge1 ge1-c; do
     sudo ip link del "$t" >/dev/null 2>&1 || true
 done
 
-docker network rm ge-000-docker
-docker network rm ge-001-docker
+docker network rm ge-000-docker >/dev/null 2>&1 || true
+docker network rm ge-001-docker >/dev/null 2>&1 || true
 
 for br in mgmt-br ge-000 ge-001; do
     sudo ip link del "$br" >/dev/null 2>&1 || true

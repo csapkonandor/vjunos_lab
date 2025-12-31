@@ -42,6 +42,12 @@ for br in ge-000 ge-001 mgmt-br; do
     sudo ip link set "$br" promisc on
 done
 
+# 5b. Disable bridge-nf (critical for L2 behavior)
+echo "[5b] Disabling bridge-nf filtering..."
+sudo sysctl -w net.bridge.bridge-nf-call-iptables=0 || true
+sudo sysctl -w net.bridge.bridge-nf-call-arptables=0 || true
+sudo sysctl -w net.bridge.bridge-nf-call-ip6tables=0 || true
+
 # 6. Start container
 echo "[6/11] Starting vJunos container..."
 docker run -d --name "$CID" \
@@ -126,17 +132,41 @@ echo "[9/11] Creating docker bridge netwroks from kernel bridges..."
 #  --opt com.docker.network.bridge.name=ge-001 \
 #  ge-001-docker
 
-docker network create -d macvlan \
-  --subnet=10.0.0.0/24 \
-  --gateway=10.0.0.1 \
-  -o parent=ge-000 \
-  ge-000-docker
+#docker network create -d macvlan \
+#  --subnet=10.0.0.0/24 \
+#  --gateway=10.0.0.1 \
+#  -o parent=ge-000 \
+#  ge-000-docker
 
-docker network create -d macvlan \
+#docker network create -d macvlan \
+#  --subnet=10.0.1.0/24 \
+#  --gateway=10.0.1.1 \
+#  -o parent=ge-001 \
+#  ge-001-docker
+
+docker network create \
+  --driver=bridge \
+  --internal \
+  --subnet=10.0.0.0/24 \
+  --gateway=10.0.0.254 \
+  --opt com.docker.network.bridge.name=ge-000 \
+  --opt com.docker.network.bridge.enable_ip_masquerade=false \
+  --opt com.docker.network.bridge.enable_icc=true \
+  --opt com.docker.network.bridge.enable_port_isolation=false \
+  --opt com.docker.network.bridge.enable_hairpin_mode=false \
+  ge-000-docker || true
+
+docker network create \
+  --driver=bridge \
+  --internal \
   --subnet=10.0.1.0/24 \
-  --gateway=10.0.1.1 \
-  -o parent=ge-001 \
-  ge-001-docker
+  --gateway=10.0.1.254 \
+  --opt com.docker.network.bridge.name=ge-001 \
+  --opt com.docker.network.bridge.enable_ip_masquerade=false \
+  --opt com.docker.network.bridge.enable_icc=true \
+  --opt com.docker.network.bridge.enable_port_isolation=false \
+  --opt com.docker.network.bridge.enable_hairpin_mode=false \
+  ge-001-docker || true
 
 #sudo ip route add 10.0.1.0/24 via 10.0.0.1 dev ge-000
 #sudo ip route add 10.0.0.0/24 via 10.0.1.1 dev ge-001

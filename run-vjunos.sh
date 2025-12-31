@@ -42,6 +42,10 @@ ip link set tap-ge1 master ge-001-dckr
 ip link set ge1-c up
 ip link set ge1-c master ge-001-dckr
 
+sysctl -w net.bridge.bridge-nf-call-iptables=0 || true
+sysctl -w net.bridge.bridge-nf-call-arptables=0 || true
+sysctl -w net.bridge.bridge-nf-call-ip6tables=0 || true
+
 echo "run-vjunos.sh: veth interfaces detected, brideges and TAP interfaces created, starting QEMU..."
 
 exec qemu-system-x86_64 \

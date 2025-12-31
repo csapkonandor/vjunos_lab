@@ -146,7 +146,6 @@ echo "[9/11] Creating docker bridge netwroks from kernel bridges..."
 
 docker network create \
   --driver=bridge \
-  --internal \
   --subnet=10.0.0.0/24 \
   --gateway=10.0.0.254 \
   --opt com.docker.network.bridge.name=ge-000 \
@@ -158,7 +157,6 @@ docker network create \
 
 docker network create \
   --driver=bridge \
-  --internal \
   --subnet=10.0.1.0/24 \
   --gateway=10.0.1.254 \
   --opt com.docker.network.bridge.name=ge-001 \

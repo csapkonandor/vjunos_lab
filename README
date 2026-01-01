@@ -23,6 +23,13 @@ openssl passwd -6
 update the password hash in the juniper.conf
 you can login by telnet with root with this password
 
+###########################
+telnet Ctrl+C
+===========================
+Press ^]
+telnet> mode character
+
+
 ########################
 turn off mixing up logs
 ========================
